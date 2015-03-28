@@ -31,14 +31,14 @@ end
 local function update(root, cobj, gcobj)
 	root.__obj = cobj
 	root.__gcobj = gcobj
-	-- don't use pairs
-	for k,v in next, root do
-		if type(v)=="table" and k~="__parent" then
+	local children = root.__cache
+	if children then
+		for k,v in pairs(children) do
 			local pointer = index(cobj, k)
 			if type(pointer) == "userdata" then
 				update(v, pointer, gcobj)
 			else
-				root[k] = nil
+				children[k] = nil
 			end
 		end
 	end
@@ -53,7 +53,7 @@ local function genkey(self)
 	return key
 end
 
-function meta:__index(key)
+local function getcobj(self)
 	local obj = self.__obj
 	if isdirty(obj) then
 		local newobj, newtbl = needupdate(self.__gcobj)
@@ -67,15 +67,29 @@ function meta:__index(key)
 			obj = self.__obj
 		end
 	end
+	return obj
+end
+
+function meta:__index(key)
+	local obj = getcobj(self)
 	local v = index(obj, key)
 	if type(v) == "userdata" then
-		local r = setmetatable({
+		local children = self.__cache
+		if children == nil then
+			children = {}
+			self.__cache = children
+		end
+		local r = children[key]
+		if r then
+			return r
+		end
+		r = setmetatable({
 			__obj = v,
 			__gcobj = self.__gcobj,
 			__parent = self,
 			__key = key,
 		}, meta)
-		self[key] = r
+		children[key] = r
 		return r
 	else
 		return v
@@ -83,25 +97,7 @@ function meta:__index(key)
 end
 
 function meta:__len()
-	return len(self.__obj)
-end
-
-local function conf_ipairs(self, index)
-	local obj = self.__obj
-	index = index + 1
-	local value =  rawget(self, index)
-	if value then
-		return index, value
-	end
-	local sz = len(obj)
-	if sz < index then
-		return
-	end
-	return index, self[index]
-end
-
-function meta:__ipairs()
-	return conf_ipairs, self, 0
+	return len(getcobj(self))
 end
 
 function meta:__pairs()
@@ -109,7 +105,8 @@ function meta:__pairs()
 end
 
 function conf.next(obj, key)
-	local nextkey = core.nextkey(obj.__obj, key)
+	local cobj = getcobj(obj)
+	local nextkey = core.nextkey(cobj, key)
 	if nextkey then
 		return nextkey, obj[nextkey]
 	end

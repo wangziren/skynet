@@ -1,3 +1,25 @@
+v1.0.0-alpha2 (2015-3-16)
+-----------
+* Update examples client to lua 5.3
+* Patch lua 5.3 to interrupt the dead loop (for debug)
+* Update sproto (fix some bugs and support unordered map)
+
+v1.0.0-alpha (2015-3-9)
+-----------
+* Update lua from 5.2 to 5.3
+* Add an online lua debugger
+* Add sharemap as an example use case of stm
+* Improve sproto for multi-state
+* Improve mongodb driver
+* Fix known bugs
+
+v0.9.3 (2015-1-5)
+-----------
+* Add : mongo createIndex
+* Update : sproto
+* bugfix : sharedata check dirty flag when len/pairs metamethod
+* bugfix : multicast
+
 v0.9.2 (2014-12-8)
 -----------
 * Simplify the message queue
